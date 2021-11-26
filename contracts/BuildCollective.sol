@@ -152,16 +152,4 @@ contract BuildCollective is Ownable {
     }
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
 }
