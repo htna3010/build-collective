@@ -17,14 +17,16 @@
   <div class="home" v-if="account">
     <div class="card-home-wrapper">
       <card
-        :title="account.username"
+        title="My account"
         :subtitle="`${balance} Ξ\t\t${account.balance} Tokens`"
         :gradient="true"
       >
         <div class="explanations">
-          This data has been fetched from the blockchain. You started by
-          connecting MetaMask, and you fetched your data by reading the
-          blockchain. Try to modify the code to see what's happening!
+          <h2>Information of my account</h2>
+          <p><b>Name: </b>{{ account.username }}</p>
+          <p><b>Address: </b>{{ address }}</p>
+          <p><b>ETH: </b>{{ balance }}</p>
+          <p><b>Balance: </b>{{ account.balance }} Tokens</p>
         </div>
         <div class="explanations">
           On your account on the contract, you have
@@ -32,6 +34,28 @@
           <button class="button-link" @click="addTokens">here</button>, you can
           add some token to your account. Just give it a try! And think to put
           an eye on Ganache!
+        </div>
+      </card>
+      <spacer :size="24" />
+      <card
+        title="My company"
+        :subtitle="`${balance} Ξ\t\t${company.balance} Tokens`"
+        v-if="company"
+      >
+        <div class="explanations" v-if="company">
+          <h2>Information of my company</h2>
+          <p><b>Name: </b>{{ company.username }}</p>
+          <p><b>Owner's Address: </b>{{ company.owner }}</p>
+          <p><b>Balance: </b>{{ company.balance }} Tokens</p>
+        </div>
+      </card>
+      <spacer :size="24" />
+      <card
+          title="My Project"
+          :subtitle="`The number of project: ${projects.length}`"
+          v-if="projects"
+      >
+        <div v-for="project in projects" v-bind:key="project.name">
         </div>
       </card>
     </div>
@@ -42,9 +66,11 @@
 import { defineComponent, computed } from 'vue'
 import { useStore } from 'vuex'
 import Card from '@/components/Card.vue'
+import Spacer from '@/components/Spacer.vue'
 
 export default defineComponent({
-  components: { Card },
+  name: 'Account',
+  components: { Card, Spacer },
   setup() {
     const store = useStore()
     const address = computed(() => store.state.account.address)
@@ -55,7 +81,9 @@ export default defineComponent({
   data() {
     const account = null
     const username = ''
-    return { account, username }
+    const userBalance = ''
+    const company = null
+    return { account, username, userBalance, company }
   },
   methods: {
     async updateAccount() {
@@ -74,6 +102,10 @@ export default defineComponent({
       await contract.methods.addBalance(200).send()
       await this.updateAccount()
     },
+    async updateCompany(){
+      const{address, contract } = this
+      this.company = await contract.methods.company(address).call()
+    }
   },
   async mounted() {
     const { address, contract } = this
@@ -92,6 +124,10 @@ export default defineComponent({
   justify-content: center;
   max-width: 500px;
   margin: auto;
+}
+
+.home-wrapper {
+  margin: auto 24px auto 24px;
 }
 
 .explanations {

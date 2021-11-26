@@ -7,7 +7,7 @@
       :blue="true"
     >
       <collective-button :transparent="true" @click="connect">
-        Connect
+        Connect to MetaMask
       </collective-button>
     </card>
     <card title="You're connected!" subtitle="Hooray" :blue="true" v-else>
