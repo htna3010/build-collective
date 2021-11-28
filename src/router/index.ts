@@ -9,6 +9,16 @@ const routes: Array<RouteRecordRaw> = [
     component: SignIn,
   },
   {
+    path: '/company/create',
+    name: 'CreateCompany',
+    component: () => import('@/views/CreateCompany.vue'),
+  },
+  {
+    path: '/project/create',
+    name: 'CreateProject',
+    component: () => import('@/views/CreateProject.vue'),
+  },
+  {
     path: '/account',
     name: 'Account',
     component: () => import('@/views/Account.vue'),

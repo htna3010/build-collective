@@ -22,7 +22,7 @@ contract BuildCollective is Ownable {
     require(bytes(username).length > 0);
     users[msg.sender] = User(username, 0, true);
     emit UserSignedUp(msg.sender, users[msg.sender]);
-    return users[msg.render];
+    return users[msg.sender];
   }
 
   function addBalance(uint256 amount) public returns (bool) {
@@ -36,7 +36,6 @@ contract BuildCollective is Ownable {
     address owner;
     uint256 balance;
     bool registered;
-    mapping(address => User) members;
   }
 
   mapping(address => Company) private companies;
@@ -47,12 +46,12 @@ contract BuildCollective is Ownable {
     return companies[companyAddress];
   }
 
-  function createCompany(string memory companyName) public returns (Company memory){
+  function createCompany(string memory companyName, uint256 balance) public returns (Company memory){
     require(bytes(companyName).length > 0);
     require(users[msg.sender].registered);
-    companies[msg.sender] = Company(companyName, users[msg.sender].username, 0, true);
+    companies[msg.sender] = Company(companyName, msg.sender, balance, true);
     emit CompanySignedUp(msg.sender, companies[msg.sender]);
-    return companies[msg.render];
+    return companies[msg.sender];
   }
 
   struct Project{
@@ -60,31 +59,32 @@ contract BuildCollective is Ownable {
     string name;
     address owner;
     uint256 balance;
-    mapping(address => User) contributors;
   }
 
+  uint internal projectCount;
+
   mapping(address => Project[]) public projects;
+  mapping(uint => mapping(address => User)) public contributors;
 
   event ProjectCreated(address indexed ownerAddress, Project indexed project);
 
-  function projects() public view returns (Project[] memory){
-    require(users[msg.sender].registered);
-    return projects[msg.render];
+  function project(address ownerAddress) public view returns (Project[] memory){
+    return projects[ownerAddress];
   }
 
-  function createProject(string memory projectName) public returns (Project memory) {
+  function createProject(string memory projectName, uint balance) public returns (Project memory) {
     require(bytes(projectName).length > 0);
     require(users[msg.sender].registered);
     projectCount ++;
-    projects[msg.render].push(Project(projectCount, projectName, msg.sender, 0));
-    emit ProjectCreated(msg.render, projects[msg.render][projectCount-1]);
-    return projects[msg.render][projectCount-1];
+    projects[msg.sender].push(Project(projectCount, projectName, msg.sender, balance));
+    emit ProjectCreated(msg.sender, projects[msg.sender][projectCount-1]);
+    return projects[msg.sender][projectCount-1];
   }
 
   //Users can give money for sponsoring
   function sponsorProject(uint projectId, address projectOwnerAddress, uint256 amount) external payable{
     require(users[msg.sender].registered && users[msg.sender].balance >= amount);
-    require(users[projectOwnerAddressAddress].registered);
+    require(users[projectOwnerAddress].registered);
     require(projectId > 0 && projectId < projects[projectOwnerAddress].length);
     for(uint i = 0; i < projects[projectOwnerAddress].length;i++){
       if(projects[projectOwnerAddress][i].id == projectId){
@@ -97,10 +97,10 @@ contract BuildCollective is Ownable {
   //Project add a contributor
   function addContributor(uint projectId, address contributor) public returns(bool){
     require(users[contributor].registered);
-    require(projectId > -1 && projectId < projects[msg.render].length);
-    for(uint i = 0; i < projects[msg.render].length;i++){
-      if(projects[msg.render][i].id == projectId){
-        projects[msg.render][i].contributors[contributor] = users[contributor];
+    require(projectId >= 0 && projectId < projects[msg.sender].length);
+    for(uint i = 0; i < projects[msg.sender].length;i++){
+      if(projects[msg.sender][i].id == projectId){
+        contributors[i][msg.sender] = users[contributor];
       }
     }
     return true;
@@ -108,12 +108,12 @@ contract BuildCollective is Ownable {
 
   //Project can send money to their contributor
   function sendToContributor(uint projectId, address toContributor, uint256 amount) external payable{
-    require(users[msg.render].registered);
-    require(projects[msg.render][projectId-1].balance >= amount);
-    for(uint i = 0; i < projects[msg.render].length;i++){
-      if(projects[msg.render][i].id == projectId){
-        projects[msg.render][i].balance -= amount;
-        projects[msg.render][i].contributors[toContributor].balance += amount;
+    require(users[msg.sender].registered);
+    require(projects[msg.sender][projectId-1].balance >= amount);
+    for(uint i = 0; i < projects[msg.sender].length;i++){
+      if(projects[msg.sender][i].id == projectId){
+        projects[msg.sender][i].balance -= amount;
+        contributors[i][msg.sender].balance += amount;
       }
     }
   }
@@ -125,20 +125,22 @@ contract BuildCollective is Ownable {
     bool done;
   }
 
+  uint bountyCount;
+
   mapping(uint => Bounty[]) public bounties;
 
-  event BountyCreated(uint indexed issuerAddress, Bounty indexed bounty);
+  event BountyCreated(uint indexed bountyId, Bounty indexed bounty);
 
-  function bounties(uint projectId) public view returns (Bounty[] memory) {
+  function bounty(uint projectId) public view returns (Bounty[] memory) {
     return bounties[projectId];
   }
 
   function createBounty(string memory content, uint256 reward, uint projectId) public returns(Bounty memory){
     require(bytes(content).length > 0);
-    require(users[msg.render].registered);
+    require(users[msg.sender].registered);
     bountyCount++;
     bounties[projectId].push(Bounty(bountyCount, content, reward, false));
-    emit(projectId, bounties[projectId][bountyCount - 1]);
+    emit BountyCreated(projectId, bounties[projectId][bountyCount - 1]);
     return bounties[projectId][bountyCount - 1];
   }
 
@@ -151,5 +153,4 @@ contract BuildCollective is Ownable {
       }
     }
   }
-
 }

@@ -44,19 +44,32 @@
       >
         <div class="explanations" v-if="company">
           <h2>Information of my company</h2>
-          <p><b>Name: </b>{{ company.username }}</p>
+          <p><b>Name: </b>{{ company.name }}</p>
           <p><b>Owner's Address: </b>{{ company.owner }}</p>
           <p><b>Balance: </b>{{ company.balance }} Tokens</p>
         </div>
       </card>
       <spacer :size="24" />
+      <card title="Create a company" :gradient="true">
+        <router-link class="card-body" to="/company/create">
+          Create a company now
+        </router-link>
+      </card>
+      <spacer :size="24" />
       <card
-          title="My Project"
-          :subtitle="`The number of project: ${projects.length}`"
-          v-if="projects"
+        title="List of my project"
+        :subtitle="`The number of project: ${projects.length}`"
+        v-if="projects"
       >
         <div v-for="project in projects" v-bind:key="project.name">
+          <resume-project :project="project"></resume-project>
         </div>
+      </card>
+      <spacer :size="24" />
+      <card title="Create a project" :gradient="true">
+        <router-link class="card-body" to="/project/create">
+          Create a project now
+        </router-link>
       </card>
     </div>
   </div>
@@ -83,7 +96,8 @@ export default defineComponent({
     const username = ''
     const userBalance = ''
     const company = null
-    return { account, username, userBalance, company }
+    const projects: any[] = []
+    return { account, username, userBalance, company, projects }
   },
   methods: {
     async updateAccount() {
@@ -102,15 +116,13 @@ export default defineComponent({
       await contract.methods.addBalance(200).send()
       await this.updateAccount()
     },
-    async updateCompany(){
-      const{address, contract } = this
-      this.company = await contract.methods.company(address).call()
-    }
   },
   async mounted() {
     const { address, contract } = this
     const account = await contract.methods.user(address).call()
     if (account.registered) this.account = account
+    this.company = await contract.methods.company(address).call()
+    this.projects = await contract.methods.project(address).call()
   },
 })
 </script>
@@ -158,5 +170,17 @@ export default defineComponent({
   color: white;
   font-family: inherit;
   font-size: 1.3rem;
+}
+
+.card-body {
+  padding: 12px;
+  display: block;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: inherit;
+  text-align: center;
+  color: inherit;
+  text-decoration: none;
+  font-variant: small-caps;
 }
 </style>
